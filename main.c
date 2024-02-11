@@ -15,6 +15,16 @@ typedef struct
     struct Task *sibling;
 } Task;
 
+// apparantly this is good practice so that there is not a dangling pointer. This means that the pointer will be reset so that it does not point to deallocated memory
+void deallocateTask(Task *task)
+{
+    if (task != NULL)
+    {
+        free(task);  // deallocate memory
+        task = NULL; // set pointer to NULL
+    }
+}
+
 void createTask(Task **parent, char *name, char *description, char *status, int priority)
 {
     Task *newTask = (Task *)malloc(sizeof(Task)); // calculates the size of the task in bytes and allocates the bytes to a block of memory and returns the pointer to the block of memory
@@ -59,6 +69,7 @@ void createTask(Task **parent, char *name, char *description, char *status, int 
 
 int main()
 {
-    Task *rootTask = NULL; // initalise a pointer to the root task
+    Task *rootTask = NULL;    // initalise a pointer to the root task
+    deallocateTask(rootTask); // free the pointer
     return 0;
 }
