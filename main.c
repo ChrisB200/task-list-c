@@ -1,75 +1,127 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-// Kind if like constants in Python
 #define MAX_NAME_LENGTH 100
 #define MAX_DESCRIPTION_LENGTH 200
 #define MAX_STATUS_LENGTH 100
 
-typedef struct
+typedef struct Task
 {
     char name[MAX_NAME_LENGTH];
     char description[MAX_DESCRIPTION_LENGTH];
     char status[MAX_STATUS_LENGTH];
     int priority;
-    struct Task *child;
-    struct Task *sibling;
+    struct Task *p_next;
 } Task;
 
-// apparantly this is good practice so that there is not a dangling pointer. This means that the pointer will be reset so that it does not point to deallocated memory
-void deallocateTask(Task *task)
+void create_task(Task *p_task, char *p_name, char *p_description, char *p_status, int priority)
 {
-    if (task != NULL)
+    if (p_task != NULL)
     {
-        free(task);  // deallocate memory
-        task = NULL; // set pointer to NULL
-    }
-}
-
-void createTask(Task **parent, char *name, char *description, char *status, int priority)
-{
-    Task *newTask = (Task *)malloc(sizeof(Task)); // calculates the size of the task in bytes and allocates the bytes to a block of memory and returns the pointer to the block of memory
-
-    if (newTask != NULL)
-    {
-        // assigns the name character arrays to the argument character arrays by getting the max length
-        strncpy(newTask->name, name, MAX_NAME_LENGTH - 1);
-        strncpy(newTask->description, description, MAX_DESCRIPTION_LENGTH - 1);
-        strncpy(newTask->status, status, MAX_STATUS_LENGTH - 1);
-        newTask->priority = priority;
-        newTask->child = NULL;
-        newTask->sibling = NULL;
-
-        // now we have to link the new task with its parent
-        if (*parent == NULL) // if there is no parent then set the parent to be itself.
+        Task *newTask = (Task *)malloc(sizeof(Task));
+        if (newTask != NULL)
         {
-            *parent = newTask;
+            strncpy(newTask->name, p_name, MAX_NAME_LENGTH - 1);
+            strncpy(newTask->description, p_description, MAX_DESCRIPTION_LENGTH - 1);
+            strncpy(newTask->status, p_status, MAX_STATUS_LENGTH - 1);
+            newTask->priority = priority;
+            newTask->p_next = NULL;
+
+            Task *p_current = p_task;
+            while (p_current->p_next != NULL)
+            {
+                p_current = p_current->p_next;
+            }
+            p_current->p_next = newTask;
         }
         else
         {
-            Task *sibling = (*parent)->child; // creates a pointer to point to the first child of the parent task
-            if (sibling == NULL)              // if there are no siblings of the parent then
-            {
-                (*parent)->child = newTask; // makes the new task be the child of the parent task.
-            }
-            else // if there are siblings then
-            {
-                while (sibling->sibling != NULL) // go through all the siblings until there is not another.
-                {
-                    sibling = sibling->sibling; // set the sibling to the next sibling
-                }
-                sibling->sibling = newTask; // after there are no more siblings then set the parent sibling to be the new task
-            }
+            printf("Memory allocation failed\n");
         }
+    }
+}
+
+void navigate_tree(Task *p_taskList)
+{
+    Task *p_current = p_taskList->p_next;
+    int index = 0;
+    while (p_current != NULL)
+    {
+        index++;
+        printf("%d: %s\n", index, p_current->name);
+        p_current = p_current->p_next;
+    }
+}
+
+void sort_tasks(Task *p_taskList)
+{
+    int swapped;
+    Task *p_current;
+    Task *p_last = NULL;
+
+    if (p_taskList == NULL || p_taskList->p_next == NULL)
+        return;
+
+    do
+    {
+        swapped = 0;
+        p_current = p_taskList->p_next;
+
+        while (p_current->p_next != p_last)
+        {
+            if (p_current->priority > p_current->p_next->priority)
+            {
+                // swap positions by adjusting pointers
+                Task *temp = p_current->p_next;
+                p_current->p_next = temp->p_next;
+                temp->p_next = p_current;
+
+                if (p_current == p_taskList->p_next) // if p_current is the head
+                    p_taskList->p_next = temp;
+                else
+                {
+                    Task *prev = p_taskList;
+                    while (prev->p_next != p_current)
+                        prev = prev->p_next;
+                    prev->p_next = temp;
+                }
+                swapped = 1;
+            }
+            p_current = p_current->p_next;
+        }
+        p_last = p_current;
+    } while (swapped);
+}
+
+Task *init_task_list()
+{
+    Task *p_taskList = (Task *)malloc(sizeof(Task));
+    if (p_taskList != NULL)
+    {
+        p_taskList->p_next = NULL;
     }
     else
     {
-        fprintf(stderr, "Memory allocation error\n");
+        printf("Memory allocation failed\n");
     }
+    return p_taskList;
 }
 
 int main()
 {
-    Task *rootTask = NULL;    // initalise a pointer to the root task
-    deallocateTask(rootTask); // free the pointer
+    Task *p_taskList = init_task_list();
+    if (p_taskList != NULL)
+    {
+        create_task(p_taskList, "Task 1", "Description 1", "pending", 1);
+        create_task(p_taskList, "Task 2", "Description 1", "pending", 3);
+        create_task(p_taskList, "Task 3", "Description 1", "pending", 2);
+        create_task(p_taskList, "Task 4", "Description 1", "pending", 6);
+
+        sort_tasks(p_taskList);
+        navigate_tree(p_taskList);
+
+        free(p_taskList);
+    }
     return 0;
 }
