@@ -13,6 +13,7 @@ typedef struct Task
     char status[MAX_STATUS_LENGTH];
     int priority;
     struct Task *p_next;
+    struct Task *p_child;
 } Task;
 
 void create_task(Task *p_task, char *p_name, char *p_description, char *p_status, int priority)
@@ -27,8 +28,9 @@ void create_task(Task *p_task, char *p_name, char *p_description, char *p_status
             strncpy(newTask->status, p_status, MAX_STATUS_LENGTH - 1);
             newTask->priority = priority;
             newTask->p_next = NULL;
+            newTask->p_child = NULL;
 
-            Task *p_current = p_task;
+            Task *p_current = p_task->p_child;
             while (p_current->p_next != NULL)
             {
                 p_current = p_current->p_next;
@@ -42,14 +44,15 @@ void create_task(Task *p_task, char *p_name, char *p_description, char *p_status
     }
 }
 
-void navigate_tree(Task *p_taskList)
+void navigate_list(Task *p_taskList, int index)
 {
-    Task *p_current = p_taskList->p_next;
-    int index = 0;
+    Task *p_current = p_taskList->p_child;
+    index = 0;
     while (p_current != NULL)
     {
         index++;
         printf("%d: %s\n", index, p_current->name);
+        navigate_list(p_taskList, index);
         p_current = p_current->p_next;
     }
 }
@@ -100,6 +103,7 @@ Task *init_task_list()
     if (p_taskList != NULL)
     {
         p_taskList->p_next = NULL;
+        p_taskList->p_child = NULL;
     }
     else
     {
@@ -118,8 +122,8 @@ int main()
         create_task(p_taskList, "Task 3", "Description 1", "pending", 2);
         create_task(p_taskList, "Task 4", "Description 1", "pending", 6);
 
-        sort_tasks(p_taskList);
-        navigate_tree(p_taskList);
+        // sort_tasks(p_taskList);
+        navigate_list(p_taskList, 0);
 
         free(p_taskList);
     }
