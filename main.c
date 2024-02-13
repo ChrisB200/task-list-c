@@ -118,10 +118,47 @@ void add_task(Task *task)
 {
 }
 
-void exit_program(Task *root)
+void free_task(Task *task)
 {
-    free(root);
-    exit(0);
+    if (task == NULL)
+        return;
+
+    free_task(task->p_subtasks);
+    free_task(task->p_next);
+
+    free(task);
+}
+
+int check_input(char input[20])
+{
+    // Calculate the length of the input string
+    int length = strlen(input);
+    int intCounter = 0;
+    int charCounter = 0;
+    for (int i = 0; i < length; i++)
+    {
+        if (isdigit(input[i]))
+        {
+            intCounter++;
+        }
+        else if (isalpha(input[i]))
+        {
+            charCounter++;
+        }
+    }
+
+    if (intCounter == length) // If all characters are digits
+    {
+        return 0;
+    }
+    else if (charCounter == length) // If none of the characters are digits
+    {
+        return 1;
+    }
+    else // If characters are invalid
+    {
+        return 2;
+    }
 }
 
 int main()
@@ -162,76 +199,72 @@ int main()
     add_subtask(root, p_task3);
     add_subtask(root, p_task4);
 
-    bool end = false;
+    bool run = true;
     int depth = 0;
     Task *currentTask = root;
 
     do
     {
-        char choice;
+        char choice[20];
         int option;
-        bool valid = false;
-        do
+
+        // Display variables
+        int maxOptions = 1;
+        int *p_maxOptions = &maxOptions;
+
+        // Search variables
+        int index = 1;
+        int *p_index = &index;
+
+        // Display and get input
+        printf("\n\n\n ----------------------------------------------------------\n\n\n");
+        display_tree(currentTask, depth, p_maxOptions);
+        printf("Press a number to access the tasks\nq - Quit\nr - Reset\nc - Create a task\n");
+        scanf(" %s", &choice);
+
+        // Check if input is a digit or a character
+        if (check_input(choice) == 0)
         {
-            // Display Variables
-            int maxOptions = 1;
-            int *p_maxOptions = &maxOptions;
-
-            // Search Variables
-            int index = 1;
-            int *p_index = &index;
-
-            // Display and get input
-            printf("\n\n\n ----------------------------------------------------------\n\n\n");
-            display_tree(currentTask, depth, p_maxOptions);
-            printf("Press a number to access the tasks\nq - Quit\nr - Reset\nc - Create a task\n");
-
-            // Check if input is a digit or just a character
-            if (scanf(" %d%c", &option, &choice) == 2)
+            option = atoi(choice); // Convert to integer
+            if (option < maxOptions)
             {
-
-                int option = choice; // Convert character digit to integer
-                if (option < maxOptions)
+                Task *foundTask = find_task(currentTask, option, p_index);
+                if (foundTask != NULL)
                 {
-                    printf("work gang");
-
-                    Task *foundTask = find_task(currentTask, option, p_index);
-                    if (foundTask != NULL)
-                    {
-                        currentTask = foundTask;
-                        printf(currentTask->name);
-                        valid = true;
-                        index = 1;
-                        maxOptions = 1;
-                    }
-                    else
-                    {
-                        printf("Task not found\n");
-                    }
+                    currentTask = foundTask;
+                }
+                else
+                {
+                    printf("Task not found\n");
                 }
             }
-            else
+        }
+        else if (check_input(choice) == 1)
+        {
+            char fChar = choice[0];
+
+            switch (tolower(fChar))
             {
-                switch (tolower(choice))
-                {
-                case 'q':
-                    exit_program(root);
-                    break;
-                case 'r':
-                    depth = 0;
-                    currentTask = root;
-                    valid = true;
-                    break;
-                default:
-                    printf("That character is not valid\n");
-                    break;
-                }
+            case 'q':
+                run = false;
+                break;
+            case 'r':
+                depth = 0;
+                currentTask = root;
+                break;
+            default:
+                printf("That character is not valid\n");
+                break;
             }
-        } while (valid != true);
+        }
+        else
+        {
+            printf("Not a valid input try again");
+        }
 
-    } while (end != true);
+    } while (run != false);
 
-    free(root);
+    free_task(root);
 
     return 0;
 }
