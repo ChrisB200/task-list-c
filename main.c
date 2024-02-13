@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <ctype.h>
 
 #define MAX_NAME_LENGTH 100
 #define MAX_DESCRIPTION_LENGTH 200
@@ -54,14 +56,14 @@ void add_subtask(Task *p_task, Task *p_subtask)
     }
 }
 
-void display_tree(Task *p_task, int depth, int index)
+void display_tree(Task *p_task, int depth, int *index)
 {
     if (p_task == NULL)
         return;
 
     // Display current task
-    printf("%d. %*s- %s\n", index, depth * 4, "", p_task->name);
-    index++;
+    printf("%d. %*s- %s\n", *index, depth * 4, "", p_task->name);
+    (*index)++;
 
     // Display subtasks
     display_tree(p_task->p_subtasks, depth + 1, index);
@@ -70,17 +72,30 @@ void display_tree(Task *p_task, int depth, int index)
     display_tree(p_task->p_next, depth, index);
 }
 
-display_area(Task *p_task, int depth, int index)
+Task *find_task(Task *p_task, int searchIndex, int *p_index)
 {
     if (p_task == NULL)
-        return;
+        return NULL;
+    if ((*p_index) == searchIndex)
+    {
+        return p_task;
+    }
+    else
+    {
+        (*p_index)++;
+        Task *subtasks = find_task(p_task->p_subtasks, searchIndex, p_index);
 
-    // Display current task
-    printf("%d. %*s- %s\n", index, depth * 4, "", p_task->name);
-    index++;
-
-    // Display subtasks
-    display_tree(p_task->p_subtasks, depth + 1, index);
+        if (subtasks == NULL)
+        {
+            Task *siblings = find_task(p_task->p_next, searchIndex, p_index);
+            return siblings;
+        }
+        else
+        {
+            return subtasks;
+        }
+        return NULL;
+    }
 }
 
 Task *init_root()
@@ -99,12 +114,14 @@ Task *init_root()
     }
 }
 
-Task *find_task(Task *startingPoint)
+void add_task(Task *task)
 {
 }
 
-void add_task(Task *task)
+void exit_program(Task *root)
 {
+    free(root);
+    exit(0);
 }
 
 int main()
@@ -145,7 +162,74 @@ int main()
     add_subtask(root, p_task3);
     add_subtask(root, p_task4);
 
-    display_area(p_task1, 0, 1);
+    bool end = false;
+    int depth = 0;
+    Task *currentTask = root;
+
+    do
+    {
+        char choice;
+        int option;
+        bool valid = false;
+        do
+        {
+            // Display Variables
+            int maxOptions = 1;
+            int *p_maxOptions = &maxOptions;
+
+            // Search Variables
+            int index = 1;
+            int *p_index = &index;
+
+            // Display and get input
+            printf("\n\n\n ----------------------------------------------------------\n\n\n");
+            display_tree(currentTask, depth, p_maxOptions);
+            printf("Press a number to access the tasks\nq - Quit\nr - Reset\nc - Create a task\n");
+
+            // Check if input is a digit or just a character
+            if (scanf(" %d%c", &option, &choice) == 2)
+            {
+
+                int option = choice; // Convert character digit to integer
+                if (option < maxOptions)
+                {
+                    printf("work gang");
+
+                    Task *foundTask = find_task(currentTask, option, p_index);
+                    if (foundTask != NULL)
+                    {
+                        currentTask = foundTask;
+                        printf(currentTask->name);
+                        valid = true;
+                        index = 1;
+                        maxOptions = 1;
+                    }
+                    else
+                    {
+                        printf("Task not found\n");
+                    }
+                }
+            }
+            else
+            {
+                switch (tolower(choice))
+                {
+                case 'q':
+                    exit_program(root);
+                    break;
+                case 'r':
+                    depth = 0;
+                    currentTask = root;
+                    valid = true;
+                    break;
+                default:
+                    printf("That character is not valid\n");
+                    break;
+                }
+            }
+        } while (valid != true);
+
+    } while (end != true);
 
     free(root);
 
