@@ -56,20 +56,25 @@ void add_subtask(Task *p_task, Task *p_subtask)
     }
 }
 
-void display_tree(Task *p_task, int depth, int *index)
+void display_tree(Task *p_task, int *depth, int *index)
 {
     if (p_task == NULL)
         return;
 
     // Display current task
-    printf("%d. %*s- %s\n", *index, depth * 4, "", p_task->name);
+    printf("%d. %*s- %s\n", *index, (*depth) * 4, "", p_task->name);
     (*index)++;
 
     // Display subtasks
-    display_tree(p_task->p_subtasks, depth + 1, index);
+    (*depth)++;
+    display_tree(p_task->p_subtasks, depth, index);
 
     // Display siblings
-    display_tree(p_task->p_next, depth, index);
+    (*depth)--;
+    if ((*depth) > 0)
+    {
+        display_tree(p_task->p_next, depth, index);
+    }
 }
 
 Task *find_task(Task *p_task, int searchIndex, int *p_index)
@@ -200,7 +205,6 @@ int main()
     add_subtask(root, p_task4);
 
     bool run = true;
-    int depth = 0;
     Task *currentTask = root;
 
     do
@@ -211,6 +215,7 @@ int main()
         // Display variables
         int maxOptions = 1;
         int *p_maxOptions = &maxOptions;
+        int *depth = 0;
 
         // Search variables
         int index = 1;
