@@ -8,6 +8,7 @@
 #define MAX_DESCRIPTION_LENGTH 200
 #define MAX_STATUS_LENGTH 100
 
+// Task tree structure
 typedef struct Task
 {
     char name[MAX_NAME_LENGTH];
@@ -18,6 +19,8 @@ typedef struct Task
     struct Task *p_subtasks;
 } Task;
 
+
+// Creates a task
 Task *create_task(char *p_name, char *p_description, char *p_status, int priority)
 {
 
@@ -32,6 +35,7 @@ Task *create_task(char *p_name, char *p_description, char *p_status, int priorit
     return newTask;
 }
 
+// Adds tasks into the main tree.
 void add_subtask(Task *p_task, Task *p_subtask)
 {
     if (p_task == NULL || p_subtask == NULL)
@@ -40,6 +44,7 @@ void add_subtask(Task *p_task, Task *p_subtask)
     }
     else
     {
+        // Adds subtask as a parent
         if (p_task->p_subtasks == NULL)
         {
             p_task->p_subtasks = p_subtask;
@@ -56,6 +61,7 @@ void add_subtask(Task *p_task, Task *p_subtask)
     }
 }
 
+// Displays the tree from the task
 void display_tree(Task *p_task, int *depth, int *index)
 {
     if (p_task == NULL)
@@ -77,6 +83,7 @@ void display_tree(Task *p_task, int *depth, int *index)
     }
 }
 
+// Finds a task based on its index
 Task *find_task(Task *p_task, int searchIndex, int *p_index)
 {
     if (p_task == NULL)
@@ -103,6 +110,7 @@ Task *find_task(Task *p_task, int searchIndex, int *p_index)
     }
 }
 
+// Initialise the root directory
 Task *init_root()
 {
     Task *root = (Task *)malloc(sizeof(Task));
@@ -119,6 +127,7 @@ Task *init_root()
     }
 }
 
+// Allows for users to add a task
 void add_task(Task *task)
 {
 }
@@ -134,7 +143,8 @@ void free_task(Task *task)
     free(task);
 }
 
-int check_input(char input[20])
+// Check input to test whether its a character, string, int
+int check_type(char input[20])
 {
     // Calculate the length of the input string
     int length = strlen(input);
@@ -164,6 +174,64 @@ int check_input(char input[20])
     {
         return 2;
     }
+}
+
+// Allows for user to choose an option
+char *get_option(Task *currentTask, int *p_maxOptions, int *p_depth, int *p_index)
+{
+    char choice[20];
+
+    // Display and get input
+    printf("\n\n\n ----------------------------------------------------------\n\n\n");
+    display_tree(currentTask, p_depth, p_maxOptions);
+    printf("Press a number to access the tasks\nq - Quit\nr - Reset\nc - Create a task\n");
+    scanf(" %s", &choice);
+
+    return choice;
+}
+
+// Character option
+bool task_option(char *choice)
+{
+    option = atoi((*choice)); // Convert to integer
+    if (option < maxOptions)
+    {
+        Task *foundTask = find_task(currentTask, option, p_index);
+        if (foundTask != NULL)
+        {
+            currentTask = foundTask;
+            return true;
+        }
+        else
+        {
+            printf("Task not found\n");
+            return false;
+        }
+    }
+}
+
+// Task option
+bool character_option(char *choice)
+{
+    char fChar = (*choice)[0];
+    bool error = true;
+
+    switch (tolower(fChar))
+    {
+        case 'q':
+            run = false;
+            break;
+        case 'r':
+            depth = 0;
+            currentTask = root;
+            break;
+        default:
+            printf("That character is not valid\n");
+            error = false;
+            break;
+    }
+
+    return error;
 }
 
 int main()
@@ -206,67 +274,36 @@ int main()
 
     bool run = true;
     Task *currentTask = root;
+    
+    // Display variable pointers
+    int maxOptions = 1;
+    int *p_maxOptions = &maxOptions;
+
+    int depth = 0;
+    int *p_depth = &depth;
+
+    // Search variables
+    int index = 1;
+    int *p_index = &index;
 
     do
     {
-        char choice[20];
-        int option;
-
-        // Display variables
-        int maxOptions = 1;
-        int *p_maxOptions = &maxOptions;
-        int *depth = 0;
-
-        // Search variables
-        int index = 1;
-        int *p_index = &index;
-
-        // Display and get input
-        printf("\n\n\n ----------------------------------------------------------\n\n\n");
-        display_tree(currentTask, depth, p_maxOptions);
-        printf("Press a number to access the tasks\nq - Quit\nr - Reset\nc - Create a task\n");
-        scanf(" %s", &choice);
+        char *p_choice = get_option(currentTask, p_maxOptions, p_depth, p_index);
 
         // Check if input is a digit or a character
-        if (check_input(choice) == 0)
+        switch (check_type((* p_choice)))
         {
-            option = atoi(choice); // Convert to integer
-            if (option < maxOptions)
-            {
-                Task *foundTask = find_task(currentTask, option, p_index);
-                if (foundTask != NULL)
-                {
-                    currentTask = foundTask;
-                }
-                else
-                {
-                    printf("Task not found\n");
-                }
-            }
-        }
-        else if (check_input(choice) == 1)
-        {
-            char fChar = choice[0];
-
-            switch (tolower(fChar))
-            {
-            case 'q':
-                run = false;
+            case 0:
+                character_option(p_choice);
                 break;
-            case 'r':
-                depth = 0;
-                currentTask = root;
+            case 1:
+                task_option(p_choice);
                 break;
-            default:
-                printf("That character is not valid\n");
+            case 2:
+                printf("Not a valid input try again");
                 break;
-            }
         }
-        else
-        {
-            printf("Not a valid input try again");
-        }
-
+     
     } while (run != false);
 
     free_task(root);
