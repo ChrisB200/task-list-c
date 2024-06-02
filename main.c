@@ -105,7 +105,7 @@ void display_tasks(Task *task, int depth, int *index)
     display_tasks(task->next, depth, index);
 }
 
-Task *select_task(Task *task, int searchIndex, int *currentSearchIndex)
+Task *find_task(Task *task, int searchIndex, int *currentSearchIndex)
 {
     if (task == NULL)
     {
@@ -119,29 +119,58 @@ Task *select_task(Task *task, int searchIndex, int *currentSearchIndex)
 
     (*currentSearchIndex)++;
 
-    Task *found = select_task(task->subtasks, searchIndex, currentSearchIndex);
+    Task *found = find_task(task->subtasks, searchIndex, currentSearchIndex);
     if (found != NULL)
     {
         return found;
     }
 
-    return select_task(task->next, searchIndex, currentSearchIndex);
+    return find_task(task->next, searchIndex, currentSearchIndex);
+}
+
+void view_details(Task *task)
+{
+    printf("\n-------------------------\n\n");
+    printf("%s - %s\n", task->name, task->status);
+    printf("%s\n", task->description);
+    printf("\n-------------------------\n");
+}
+
+Task *select_task(Task *currentTask)
+{
+    int searchIndex;
+    int currentSearchIndex = 1;
+    printf("Now select a task via its index\n");
+    scanf("%d", &searchIndex);
+    Task *selectedTask = find_task(currentTask, searchIndex, &currentSearchIndex);
+    if (selectedTask != NULL)
+    {
+        return selectedTask;
+    }
+    else
+    {
+        printf("Task not found\n");
+        return NULL;
+    }
 }
 
 int main()
 {
+    // initialise root task (ALL TASKS)
     Task *root = init_root();
     if (root == NULL)
     {
         return 1;
     }
-
+    
+    // task creation
     Task *test = create_task("test", "test description", "WIP", 1);
     Task *test2 = create_task("test2", "test description", "WIP", 1);
     Task *test3 = create_task("test3", "test description", "WIP", 1);
     Task *test4 = create_task("test4", "test description", "WIP", 1);
     Task *test5 = create_task("test5", "test description", "WIP", 1);
-
+    
+    // task linking
     if (test && test2 && test3 && test4 && test5)
     {
         add_subtask(root, test);
@@ -150,35 +179,26 @@ int main()
         add_subtask(test2, test4);
         add_subtask(test2, test5);
     }
-
+    
+    // program loop
     bool run = true;
     Task *currentTask = root;
     do {
         int index = 1;
-        int searchIndex;
         int choice;
+
         display_tasks(currentTask, 0, &index);
-        printf("1. Quit\n2. Search\n");
+        printf("1. Quit\n2. View details of a task\n3. Display task tree\n");
         scanf("%d", &choice);
 
         switch (choice) {
-            case 1:
+            case 1: // quit
                 run = false;
                 break;
-            case 2:
-                printf("Now select a task via its index\n");
-                scanf("%d", &searchIndex);
-                int currentSearchIndex = 1;
-                Task *selectedTask = select_task(root, searchIndex, &currentSearchIndex);
+            case 2: // view details of a task
+                Task *selectedTask = select_task(currentTask);
                 if (selectedTask != NULL)
-                {
-                    printf("Selected task: %s - %s\n", selectedTask->name, selectedTask->status);
-                    currentTask = selectedTask;
-                }
-                else
-                {
-                    printf("Task not found\n");
-                }
+                    view_details(selectedTask);
                 break;
             default:
                 printf("Invalid choice\n");
