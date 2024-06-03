@@ -154,6 +154,75 @@ Task *select_task(Task *currentTask)
     }
 }
 
+void strip_newline(char *str) {
+    size_t len = strlen(str);
+    if (len > 0 && str[len - 1] == '\n') {
+        str[len - 1] = '\0';
+    }
+}
+
+void flush_input() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
+Task *get_task_input()
+{
+    char inputName[MAX_NAME_LENGTH];
+    char inputDescription[MAX_DESCRIPTION_LENGTH];
+    char inputStatus[MAX_STATUS_LENGTH];
+    int inputPriority;
+    char choice = 'n';
+    
+    flush_input();
+    do {
+        printf("What is the task name?\n");
+        fgets(inputName, MAX_NAME_LENGTH, stdin);
+        strip_newline(inputName);
+        
+        printf("What is the task description?\n");
+        fgets(inputDescription, MAX_DESCRIPTION_LENGTH, stdin);
+        strip_newline(inputDescription);
+
+        printf("What is the task current status?\n");
+        fgets(inputStatus, MAX_STATUS_LENGTH, stdin);
+        strip_newline(inputStatus);
+
+        printf("What is the task priority?\n");
+        scanf("%d", &inputPriority);
+
+        printf("\n-------------------------\n\n");
+        printf("Name: %s\nDescription: %s\nStatus: %s\nPriority: %d\n", inputName, inputDescription, inputStatus, inputPriority);
+        printf("Is this correct? y/n\n");
+        printf("\n-------------------------\n");
+        scanf(" %c", &choice);
+
+    } while (choice == 'n');
+
+    return create_task(inputName, inputDescription, inputStatus, inputPriority);
+}
+
+void link_task(Task *root, Task *subtask, int *index)
+{
+    Task *selectedTask;
+    do {
+        (*index) = 1;
+        display_tasks(root, 0, index);
+        printf("Select the task that this task should link to\n");
+        selectedTask = select_task(root);
+
+        if (selectedTask != NULL)
+        {
+            add_subtask(selectedTask, subtask);
+            break;
+        }
+        else
+        {
+            printf("could not find selected task, try again\n");
+        }
+    }while (true);
+}
+
 int main()
 {
     // initialise root task (ALL TASKS)
@@ -183,12 +252,13 @@ int main()
     // program loop
     bool run = true;
     Task *currentTask = root;
+    Task *selectedTask;
     do {
         int index = 1;
         int choice;
 
         display_tasks(currentTask, 0, &index);
-        printf("1. Quit\n2. View details of a task\n3. Display task tree\n");
+        printf("1. Quit\n2. View details of a task\n3. Display task tree\n4. Reset to root\n5. Create a new task\n");
         scanf("%d", &choice);
 
         switch (choice) {
@@ -196,9 +266,20 @@ int main()
                 run = false;
                 break;
             case 2: // view details of a task
-                Task *selectedTask = select_task(currentTask);
+                selectedTask = select_task(currentTask);
                 if (selectedTask != NULL)
                     view_details(selectedTask);
+                break;
+            case 3:
+                selectedTask = select_task(currentTask);
+                if (selectedTask != NULL)
+                    currentTask = selectedTask;
+                break;
+            case 4: // reset to root
+                currentTask = root;
+            case 5: // create a new task
+                Task *newTask = get_task_input();
+                link_task(root, newTask, &index);
                 break;
             default:
                 printf("Invalid choice\n");
